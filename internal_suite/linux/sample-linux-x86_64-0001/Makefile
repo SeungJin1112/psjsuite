@@ -1,8 +1,8 @@
 #----------------------------------------
-SRC_DIR := ../samples
-INC_DIR := ../samples
-OBJ_DIR := ./obj/sample-linux-x86_64-0001
-TARGET_DIR := ./bin
+SRC_DIR := ../../samples/sample-0001
+INC_DIR := ../../samples/sample-0001
+OBJ_DIR := ../obj/sample-linux-x86_64-0001
+TARGET_DIR := ../bin
 #----------------------------------------
 SRC_CPP := $(wildcard $(addsuffix /*.cpp, $(SRC_DIR)))
 SRC_C   := $(wildcard $(addsuffix /*.c,   $(SRC_DIR)))
