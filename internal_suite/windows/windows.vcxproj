@@ -143,6 +143,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\platform\pe_image.h" />
+    <ClInclude Include="..\..\platform\platform.h" />
+    <ClInclude Include="..\..\platform\windows_def.h" />
+    <ClInclude Include="src\enumerator\enumerator.h" />
+    <ClInclude Include="src\injector\injector.h" />
+    <ClInclude Include="src\windows.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\enumerator\enumerator.cpp" />
+    <ClCompile Include="src\injector\injector.cpp" />
+    <ClCompile Include="src\windows.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

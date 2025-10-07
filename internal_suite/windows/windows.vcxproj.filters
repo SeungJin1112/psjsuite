@@ -4,5 +4,45 @@
     <Filter Include="src">
       <UniqueIdentifier>{94f375e7-1723-4731-9032-24c2bcff7041}</UniqueIdentifier>
     </Filter>
+    <Filter Include="platform">
+      <UniqueIdentifier>{c8a28ca7-9dc0-4e24-bc59-d9d88039eb79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\enumerator">
+      <UniqueIdentifier>{2e214543-35d9-4464-a4d5-ecb28ab6a1c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\injector">
+      <UniqueIdentifier>{f3c17806-8a9d-45da-85ff-aa1367735186}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\platform\pe_image.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\platform\platform.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\platform\windows_def.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="src\enumerator\enumerator.h">
+      <Filter>src\enumerator</Filter>
+    </ClInclude>
+    <ClInclude Include="src\injector\injector.h">
+      <Filter>src\injector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\enumerator\enumerator.cpp">
+      <Filter>src\enumerator</Filter>
+    </ClCompile>
+    <ClCompile Include="src\injector\injector.cpp">
+      <Filter>src\injector</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
