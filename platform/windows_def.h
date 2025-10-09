@@ -7,16 +7,17 @@
 //----------------------------------------------------------------------
 // windows
 //----------------------------------------------------------------------
-#define NtCurrentProcess() ((HANDLE)(LONG_PTR)-0x01)
-#define ZwCurrentProcess() NtCurrentProcess()
-#define NtCurrentThread() ((HANDLE)(LONG_PTR)-0x02)
-#define ZwCurrentThread() NtCurrentThread()
-#define NtCurrentSession() ((HANDLE)(LONG_PTR)-0x03)
-#define ZwCurrentSession() NtCurrentSession()
+#define NtCurrentProcess()          ((HANDLE)(LONG_PTR)-0x01)
+#define NtCurrentThread()           ((HANDLE)(LONG_PTR)-0x02)
+#define NtCurrentSession()          ((HANDLE)(LONG_PTR)-0x03)
 
-#define NtCurrentPeb() (NtCurrentTeb()->ProcessEnvironmentBlock)
-#define NtCurrentProcessId() (NtCurrentTeb()->ClientId.UniqueProcess)
-#define NtCurrentThreadId() (NtCurrentTeb()->ClientId.UniqueThread)
+#define ZwCurrentProcess()          NtCurrentProcess()
+#define ZwCurrentThread()           NtCurrentThread()
+#define ZwCurrentSession()          NtCurrentSession()
+
+#define NtCurrentPeb()              (NtCurrentTeb()->ProcessEnvironmentBlock)
+#define NtCurrentProcessId()        (NtCurrentTeb()->ClientId.UniqueProcess)
+#define NtCurrentThreadId()         (NtCurrentTeb()->ClientId.UniqueThread)
 //----------------------------------------------------------------------
 #define FILE_SUPERSEDE              0x00000000
 #define FILE_OPEN                   0x00000001
@@ -105,8 +106,8 @@ typedef USER_THREAD_START_ROUTINE* PUSER_THREAD_START_ROUTINE;
 //----------------------------------------------------------------------
 typedef struct _PSJ_CLIENT_ID
 {
-    HANDLE UniqueProcess;
-    HANDLE UniqueThread;
+    void *unique_process;
+    void *unique_thread;
 } PSJ_CLIENT_ID, *PPSJ_CLIENT_ID;
 //----------------------------------------------------------------------
 typedef NTSTATUS(NTAPI *PFN_RtlCreateUserThread)

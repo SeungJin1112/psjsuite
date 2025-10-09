@@ -1,4 +1,4 @@
-#include "windows.h"
+#include "sample-windows-0001.h"
 
 std::set<std::wstring> ParseCommandLineToSetW(LPWSTR cmdLine)
 {
