@@ -78,12 +78,80 @@ namespace psj
             _Out_opt_ PPSJ_CLIENT_ID clientId);
 
     private:
-        bool InjectDllIntoProcess(HANDLE processHandle, const std::string& dllName);
+        bool LoadMappedImage(
+            _In_opt_ PWSTR fileName,
+            _In_opt_ HANDLE fileHandle,
+            _In_ BOOLEAN readOnly,
+            _Out_ PPSJ_MAPPED_IMAGE mappedImage);
+
+        bool MapViewOfEntireFile(
+            _In_opt_ PWSTR fileName,
+            _In_opt_ HANDLE fileHandle,
+            _In_ BOOLEAN readOnly,
+            _Out_ PVOID *viewBase,
+            _Out_ PSIZE_T size);
+
+        bool InitializeMappedImage(
+            _Out_ PPSJ_MAPPED_IMAGE mappedImage,
+            _In_ PVOID viewBase,
+            _In_ SIZE_T size);
+
+        bool MappedImageProbe(
+            _In_ PPSJ_MAPPED_IMAGE mappedImage,
+            _In_ PVOID address,
+            _In_ SIZE_T length);
+
+        bool ProbeAddress(
+            _In_ PVOID userAddress,
+            _In_ SIZE_T userLength,
+            _In_ PVOID bufferAddress,
+            _In_ SIZE_T bufferLength,
+            _In_ ULONG alignment);
+
+        bool GetProcedureAddressRemote(
+            _In_ HANDLE processHandle,
+            _In_ PWSTR fileName,
+            _In_opt_ PSTR procedureName,
+            _In_opt_ ULONG procedureNumber,
+            _Out_ PVOID *procedureAddress,
+            _Out_opt_ PVOID *dllBase);
+
+        bool GetMappedImageExports(
+            _Out_ PPSJ_MAPPED_IMAGE_EXPORTS exports,
+            _In_ PPSJ_MAPPED_IMAGE mappedImage);
+
+        bool GetMappedImageDataEntry(
+            _In_ PPSJ_MAPPED_IMAGE mappedImage,
+            _In_ ULONG index,
+            _Out_ PPSJ_IMAGE_DATA_DIRECTORY *entry);
+
+        PVOID MappedImageRvaToVa(
+            _In_ PPSJ_MAPPED_IMAGE mappedImage,
+            _In_ ULONG rva,
+            _Out_opt_ PPSJ_IMAGE_SECTION_HEADER *section);
+
+        PPSJ_IMAGE_SECTION_HEADER MappedImageRvaToSection(
+            _In_ PPSJ_MAPPED_IMAGE mappedImage,
+            _In_ ULONG rva);
+
+        bool GetMappedImageExportFunctionRemote(
+            _In_ PPSJ_MAPPED_IMAGE_EXPORTS exports,
+            _In_opt_ PSTR name,
+            _In_opt_ USHORT ordinal,
+            _In_ PVOID remoteBase,
+            _Out_ PVOID *function);
+
+        ULONG LookupMappedImageExportName(
+            _In_ PPSJ_MAPPED_IMAGE_EXPORTS exports,
+            _In_ PSTR name);
+
+    private:
+        bool InjectDllIntoProcess(HANDLE processHandle, const std::wstring &dllName);
 
     public:
         Injector();
         virtual ~Injector();
 
-        bool Injection(DWORD processId, const std::string& dllName);
+        bool Injection(DWORD processId, const std::wstring &dllName);
     };
 }

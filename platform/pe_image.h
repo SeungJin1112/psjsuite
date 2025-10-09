@@ -1,7 +1,29 @@
 #pragma once
 
 #include "platform.h"
-
+//----------------------------------------------------------------------
+typedef struct _PSJ_IMAGE_DOS_HEADER
+{
+    uint16_t e_magic;
+    uint16_t e_cblp;
+    uint16_t e_cp;
+    uint16_t e_crlc;
+    uint16_t e_cparhdr;
+    uint16_t e_minalloc;
+    uint16_t e_maxalloc;
+    uint16_t e_ss;
+    uint16_t e_sp;
+    uint16_t e_csum;
+    uint16_t e_ip;
+    uint16_t e_cs;
+    uint16_t e_lfarlc;
+    uint16_t e_ovno;
+    uint16_t e_res[0x04];
+    uint16_t e_oemid;
+    uint16_t e_oeminfo;
+    uint16_t e_res2[0x0A];
+    uint32_t e_lfanew;
+} PSJ_IMAGE_DOS_HEADER, *PPSJ_IMAGE_DOS_HEADER;
 //----------------------------------------------------------------------
 typedef struct _PSJ_IMAGE_FILE_HEADER
 {
@@ -20,7 +42,7 @@ typedef struct _PSJ_IMAGE_DATA_DIRECTORY
     uint32_t size;
 } PSJ_IMAGE_DATA_DIRECTORY, *PPSJ_IMAGE_DATA_DIRECTORY;
 //----------------------------------------------------------------------
-typedef struct _PSJ_IMAGE_OPTIONAL_HEADER
+typedef struct _PSJ_IMAGE_OPTIONAL_HEADER32
 {
     uint16_t magic;
     uint8_t major_linker_version;
@@ -89,6 +111,14 @@ typedef struct _PSJ_IMAGE_OPTIONAL_HEADER64
     PSJ_IMAGE_DATA_DIRECTORY data_directory[0x10];
 } PSJ_IMAGE_OPTIONAL_HEADER64, *PPSJ_IMAGE_OPTIONAL_HEADER64;
 //----------------------------------------------------------------------
+#if defined(_WIN64)
+#define PSJ_IMAGE_OPTIONAL_HEADER PSJ_IMAGE_OPTIONAL_HEADER64
+#define PPSJ_IMAGE_OPTIONAL_HEADER PPSJ_IMAGE_OPTIONAL_HEADER64
+#else
+#define PSJ_IMAGE_OPTIONAL_HEADER PSJ_IMAGE_OPTIONAL_HEADER32
+#define PPSJ_IMAGE_OPTIONAL_HEADER PPSJ_IMAGE_OPTIONAL_HEADER32
+#endif
+//----------------------------------------------------------------------
 typedef struct _PSJ_IMAGE_ROM_OPTIONAL_HEADER
 {
     uint16_t magic;
@@ -119,6 +149,14 @@ typedef struct _PSJ_IMAGE_NT_HEADERS64
     PSJ_IMAGE_FILE_HEADER file_header;
     PSJ_IMAGE_OPTIONAL_HEADER64 optional_header;
 } PSJ_IMAGE_NT_HEADERS64, *PPSJ_IMAGE_NT_HEADERS64;
+//----------------------------------------------------------------------
+#if defined(_WIN64)
+#define PSJ_IMAGE_NT_HEADERS PSJ_IMAGE_NT_HEADERS64
+#define PPSJ_IMAGE_NT_HEADERS PPSJ_IMAGE_NT_HEADERS64
+#else
+#define PSJ_IMAGE_NT_HEADERS PSJ_IMAGE_NT_HEADERS32
+#define PPSJ_IMAGE_NT_HEADERS PPSJ_IMAGE_NT_HEADERS32
+#endif
 //----------------------------------------------------------------------
 typedef struct _PSJ_IMAGE_ROM_HEADERS
 {
@@ -166,6 +204,14 @@ typedef struct _PSJ_MAPPED_IMAGE64
     uint16_t magic;
 } PSJ_MAPPED_IMAGE64, *PPSJ_MAPPED_IMAGE64;
 //----------------------------------------------------------------------
+#if defined(_WIN64)
+#define PSJ_MAPPED_IMAGE PSJ_MAPPED_IMAGE64
+#define PPSJ_MAPPED_IMAGE PPSJ_MAPPED_IMAGE64
+#else
+#define PSJ_MAPPED_IMAGE PSJ_MAPPED_IMAGE32
+#define PPSJ_MAPPED_IMAGE PPSJ_MAPPED_IMAGE32
+#endif
+//----------------------------------------------------------------------
 typedef struct _PSJ_IMAGE_EXPORT_DIRECTORY
 {
     uint32_t characteristics;
@@ -203,6 +249,14 @@ typedef struct _PSJ_MAPPED_IMAGE_EXPORTS64
     uint16_t *ordinal_table;
 } PSJ_MAPPED_IMAGE_EXPORTS64, *PPSJ_MAPPED_IMAGE_EXPORTS64;
 //----------------------------------------------------------------------
+#if defined(_WIN64)
+#define PSJ_MAPPED_IMAGE_EXPORTS PSJ_MAPPED_IMAGE_EXPORTS64
+#define PPSJ_MAPPED_IMAGE_EXPORTS PPSJ_MAPPED_IMAGE_EXPORTS64
+#else
+#define PSJ_MAPPED_IMAGE_EXPORTS PSJ_MAPPED_IMAGE_EXPORTS32
+#define PPSJ_MAPPED_IMAGE_EXPORTS PPSJ_MAPPED_IMAGE_EXPORTS32
+#endif
+//----------------------------------------------------------------------
 typedef struct _PSJ_REMOTE_MAPPED_IMAGE32
 {
     void *view_base;
@@ -220,6 +274,14 @@ typedef struct _PSJ_REMOTE_MAPPED_IMAGE64
     PPSJ_IMAGE_SECTION_HEADER sections;
     uint16_t magic;
 } PSJ_REMOTE_MAPPED_IMAGE64, *PPSJ_REMOTE_MAPPED_IMAGE64;
+//----------------------------------------------------------------------
+#if defined(_WIN64)
+#define PSJ_REMOTE_MAPPED_IMAGE PSJ_REMOTE_MAPPED_IMAGE64
+#define PPSJ_REMOTE_MAPPED_IMAGE PPSJ_REMOTE_MAPPED_IMAGE64
+#else
+#define PSJ_REMOTE_MAPPED_IMAGE PSJ_REMOTE_MAPPED_IMAGE32
+#define PPSJ_REMOTE_MAPPED_IMAGE PPSJ_REMOTE_MAPPED_IMAGE32
+#endif
 //----------------------------------------------------------------------
 typedef struct _PSJ_MAPPED_IMAGE_EXPORT_ENTRY
 {
@@ -270,6 +332,14 @@ typedef struct _PSJ_MAPPED_IMAGE_IMPORTS64
     };
 } PSJ_MAPPED_IMAGE_IMPORTS64, *PPSJ_MAPPED_IMAGE_IMPORTS64;
 //----------------------------------------------------------------------
+#if defined(_WIN64)
+#define PSJ_MAPPED_IMAGE_IMPORTS PSJ_MAPPED_IMAGE_IMPORTS64
+#define PPSJ_MAPPED_IMAGE_IMPORTS PPSJ_MAPPED_IMAGE_IMPORTS64
+#else
+#define PSJ_MAPPED_IMAGE_IMPORTS PSJ_MAPPED_IMAGE_IMPORTS32
+#define PPSJ_MAPPED_IMAGE_IMPORTS PPSJ_MAPPED_IMAGE_IMPORTS32
+#endif
+//----------------------------------------------------------------------
 typedef struct _PSJ_MAPPED_IMAGE_IMPORT_DLL32
 {
     PPSJ_MAPPED_IMAGE32 mapped_image;
@@ -297,6 +367,14 @@ typedef struct _PSJ_MAPPED_IMAGE_IMPORT_DLL64
     };
     void **lookup_table;
 } PSJ_MAPPED_IMAGE_IMPORT_DLL64, *PPSJ_MAPPED_IMAGE_IMPORT_DLL64;
+//----------------------------------------------------------------------
+#if defined(_WIN64)
+#define PSJ_MAPPED_IMAGE_IMPORT_DLL PSJ_MAPPED_IMAGE_IMPORT_DLL64
+#define PPSJ_MAPPED_IMAGE_IMPORT_DLL PPSJ_MAPPED_IMAGE_IMPORT_DLL64
+#else
+#define PSJ_MAPPED_IMAGE_IMPORT_DLL PSJ_MAPPED_IMAGE_IMPORT_DLL32
+#define PPSJ_MAPPED_IMAGE_IMPORT_DLL PPSJ_MAPPED_IMAGE_IMPORT_DLL32
+#endif
 //----------------------------------------------------------------------
 typedef struct _PSJ_MAPPED_IMAGE_IMPORT_ENTRY
 {

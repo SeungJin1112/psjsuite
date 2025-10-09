@@ -175,12 +175,205 @@ namespace psj
             clientId);
     }
 
-    bool Injector::InjectDllIntoProcess(HANDLE processHandle, const std::string& dllName)
+    bool Injector::LoadMappedImage(
+        _In_opt_ PWSTR fileName,
+        _In_opt_ HANDLE fileHandle,
+        _In_ BOOLEAN readOnly,
+        _Out_ PPSJ_MAPPED_IMAGE mappedImage)
+    {
+        if (MapViewOfEntireFile(
+            fileName,
+            fileHandle,
+            readOnly,
+            &mappedImage->view_base,
+            (size_t*)&mappedImage->size) == false)
+            return false;
+
+        if (InitializeMappedImage(
+            mappedImage,
+            mappedImage->view_base,
+            mappedImage->size) == false)
+        {
+            PsjNtUnmapViewOfSection(NtCurrentProcess(), mappedImage->view_base);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Injector::MapViewOfEntireFile(
+        _In_opt_ PWSTR fileName,
+        _In_opt_ HANDLE fileHandle,
+        _In_ BOOLEAN readOnly,
+        _Out_ PVOID *viewBase,
+        _Out_ PSIZE_T size)
+    {
+        bool ret = false;
+        NTSTATUS status = STATUS_SUCCESS;
+        BOOLEAN openedFile = FALSE;
+        LARGE_INTEGER fileSize = {};
+        HANDLE sectionHandle = nullptr;
+        SIZE_T tmpViewSize = 0x00;
+        PVOID tmpViewBase = nullptr;
+
+        if (fileName == L"" && fileHandle == nullptr)
+            return false;
+
+        if (size == nullptr || viewBase == nullptr)
+            return false;
+
+        if (fileHandle == nullptr)
+        {
+            fileHandle = CreateFileW(
+                fileName,
+                ((FILE_EXECUTE | FILE_READ_ATTRIBUTES | FILE_READ_DATA) | (!readOnly ? (FILE_APPEND_DATA | FILE_WRITE_ATTRIBUTES | FILE_WRITE_DATA) : 0x00)) | SYNCHRONIZE,
+                FILE_SHARE_READ,
+                nullptr,
+                OPEN_EXISTING,
+                0x00,
+                nullptr);
+
+            if (fileHandle == INVALID_HANDLE_VALUE)
+                return false;
+
+            openedFile = TRUE;
+        }
+
+        fileSize.LowPart = GetFileSize(fileHandle, (LPDWORD)&fileSize.HighPart);
+
+        status = PsjNtCreateSection(
+            &sectionHandle,
+            SECTION_ALL_ACCESS,
+            nullptr,
+            &fileSize,
+            readOnly ? PAGE_EXECUTE_READ : PAGE_EXECUTE_READWRITE,
+            SEC_COMMIT,
+            fileHandle);
+
+        if (!NT_SUCCESS(status))
+            goto CLEANUP;
+
+        tmpViewSize = (SIZE_T)fileSize.QuadPart;
+
+        status = PsjNtMapViewOfSection(
+            sectionHandle,
+            NtCurrentProcess(),
+            &tmpViewBase,
+            0x00,
+            0x00,
+            nullptr,
+            &tmpViewSize,
+            SECTION_INHERIT::VIEW_SHARE,
+            0x00,
+            readOnly ? PAGE_EXECUTE_READ : PAGE_EXECUTE_READWRITE);
+
+        if (!NT_SUCCESS(status))
+            goto CLEANUP;
+
+        *viewBase = tmpViewBase;
+        *size = (SIZE_T)fileSize.QuadPart;
+
+        ret = true;
+
+    CLEANUP:
+        if (sectionHandle != nullptr)
+            CloseHandle(sectionHandle);
+
+        if (openedFile && fileHandle != nullptr)
+            CloseHandle(fileHandle);
+
+        return ret;
+    }
+
+    bool Injector::InitializeMappedImage(
+        _Out_ PPSJ_MAPPED_IMAGE mappedImage,
+        _In_ PVOID viewBase,
+        _In_ SIZE_T size)
+    {
+        PPSJ_IMAGE_DOS_HEADER dosHeader = nullptr;
+        ULONG ntHeadersOffset = 0x00;
+
+        mappedImage->view_base = viewBase;
+        mappedImage->size = size;
+
+        dosHeader = (PPSJ_IMAGE_DOS_HEADER)viewBase;
+
+        if (MappedImageProbe(mappedImage, dosHeader, sizeof(PSJ_IMAGE_DOS_HEADER)) == false)
+            return false;
+
+        if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+            return false;
+
+        ntHeadersOffset = (ULONG)dosHeader->e_lfanew;
+
+        if (ntHeadersOffset == 0x00 || ntHeadersOffset >= 0x10000000 || ntHeadersOffset >= size)
+            return false;
+
+        mappedImage->nt_headers = (PPSJ_IMAGE_NT_HEADERS)PTR_ADD_OFFSET(viewBase, ntHeadersOffset);
+
+        if (MappedImageProbe(mappedImage, dosHeader, sizeof(PSJ_IMAGE_DOS_HEADER)) == false)
+            return false;
+            
+        if (MappedImageProbe(mappedImage, mappedImage->nt_headers, FIELD_OFFSET(PSJ_IMAGE_NT_HEADERS, optional_header)) == false)
+            return false;
+
+        if (MappedImageProbe(
+            mappedImage, mappedImage->nt_headers,
+            FIELD_OFFSET(PSJ_IMAGE_NT_HEADERS, optional_header) +
+            mappedImage->nt_headers->file_header.size_of_optional_header +
+            mappedImage->nt_headers->file_header.number_of_sections * sizeof(PSJ_IMAGE_SECTION_HEADER)) == false)
+            return false;
+
+        if (mappedImage->nt_headers->signature != IMAGE_NT_SIGNATURE)
+            return false;
+
+        mappedImage->magic = mappedImage->nt_headers->optional_header.magic;
+
+        if (mappedImage->magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
+            mappedImage->magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+            return false;
+
+        mappedImage->number_of_sections = mappedImage->nt_headers->file_header.number_of_sections;
+
+        mappedImage->sections = (PPSJ_IMAGE_SECTION_HEADER)(
+            ((PCHAR)&mappedImage->nt_headers->optional_header) +
+            mappedImage->nt_headers->file_header.size_of_optional_header);
+
+        return true;
+    }
+
+    bool Injector::MappedImageProbe(
+        _In_ PPSJ_MAPPED_IMAGE mappedImage,
+        _In_ PVOID address,
+        _In_ SIZE_T length)
+    {
+        return ProbeAddress(address, length, mappedImage->view_base, mappedImage->size, 0x01);
+    }
+
+    bool Injector::ProbeAddress(
+        _In_ PVOID userAddress,
+        _In_ SIZE_T userLength,
+        _In_ PVOID bufferAddress,
+        _In_ SIZE_T bufferLength,
+        _In_ ULONG alignment)
+    {
+        if (userLength == 0x00 || ((ULONG_PTR)userAddress & (alignment - 0x01)) != 0x00)
+            return false;
+
+        if (((ULONG_PTR)userAddress + userLength < (ULONG_PTR)userAddress) ||
+            ((ULONG_PTR)userAddress < (ULONG_PTR)bufferAddress) ||
+            ((ULONG_PTR)userAddress + userLength > (ULONG_PTR)bufferAddress + bufferLength))
+            return false;
+
+        return true;
+    }
+
+    bool Injector::InjectDllIntoProcess(HANDLE processHandle, const std::wstring& dllName)
     {
         return false;
     }
 
-    bool Injector::Injection(DWORD processId, const std::string& dllName)
+    bool Injector::Injection(DWORD processId, const std::wstring& dllName)
     {
         HANDLE processHandle = OpenProcess(
             PROCESS_CREATE_THREAD
