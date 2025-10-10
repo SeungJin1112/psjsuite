@@ -102,7 +102,7 @@ NTSTATUS NTAPI USER_THREAD_START_ROUTINE
 (
     _In_ PVOID ThreadParameter
 );
-typedef USER_THREAD_START_ROUTINE* PUSER_THREAD_START_ROUTINE;
+typedef USER_THREAD_START_ROUTINE *PUSER_THREAD_START_ROUTINE;
 //----------------------------------------------------------------------
 typedef struct _PSJ_CLIENT_ID
 {
@@ -122,6 +122,73 @@ typedef NTSTATUS(NTAPI *PFN_RtlCreateUserThread)
     _In_opt_ PVOID Parameter,
     _Out_opt_ PHANDLE ThreadHandle,
     _Out_opt_ PPSJ_CLIENT_ID ClientId
+);
+//----------------------------------------------------------------------
+typedef struct _PSJ_PROCEDURE_ADDRESS_REMOTE_CONTEXT
+{
+    WCHAR file_name[MAX_PATH];
+    PVOID dll_base;
+} PSJ_PROCEDURE_ADDRESS_REMOTE_CONTEXT, *PPSJ_PROCEDURE_ADDRESS_REMOTE_CONTEXT;
+//----------------------------------------------------------------------
+typedef NTSTATUS(NTAPI *PFN_NtQueryInformationProcess)
+(
+    _In_ HANDLE ProcessHandle,
+    _In_ PROCESSINFOCLASS ProcessInformationClass,
+    _Out_writes_bytes_(ProcessInformationLength) PVOID ProcessInformation,
+    _In_ ULONG ProcessInformationLength,
+    _Out_opt_ PULONG ReturnLength
+);
+//----------------------------------------------------------------------
+typedef enum _MEMORY_INFORMATION_CLASS
+{
+    MemoryBasicInformation, // MEMORY_BASIC_INFORMATION
+    MemoryWorkingSetInformation, // MEMORY_WORKING_SET_INFORMATION
+    MemoryMappedFilenameInformation, // UNICODE_STRING
+    MemoryRegionInformation, // MEMORY_REGION_INFORMATION
+    MemoryWorkingSetExInformation, // MEMORY_WORKING_SET_EX_INFORMATION
+    MemorySharedCommitInformation, // MEMORY_SHARED_COMMIT_INFORMATION
+    MemoryImageInformation, // MEMORY_IMAGE_INFORMATION
+    MemoryRegionInformationEx, // MEMORY_REGION_INFORMATION
+    MemoryPrivilegedBasicInformation,
+    MemoryEnclaveImageInformation, // MEMORY_ENCLAVE_IMAGE_INFORMATION // since REDSTONE3
+    MemoryBasicInformationCapped, // 10
+    MemoryPhysicalContiguityInformation, // MEMORY_PHYSICAL_CONTIGUITY_INFORMATION // since 20H1
+    MaxMemoryInfoClass
+} MEMORY_INFORMATION_CLASS;
+//----------------------------------------------------------------------
+typedef NTSTATUS(NTAPI *PFN_NtQueryVirtualMemory)
+(
+    _In_ HANDLE ProcessHandle,
+    _In_ PVOID BaseAddress,
+    _In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
+    _Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
+    _In_ SIZE_T MemoryInformationLength,
+    _Out_opt_ PSIZE_T ReturnLength
+);
+//----------------------------------------------------------------------
+typedef struct _RTL_BUFFER
+{
+    PWCHAR Buffer;
+    PWCHAR StaticBuffer;
+    SIZE_T Size;
+    SIZE_T StaticSize;
+    SIZE_T ReservedForAllocatedSize;
+    PVOID ReservedForIMalloc;
+} RTL_BUFFER, *PRTL_BUFFER;
+//----------------------------------------------------------------------
+typedef struct _RTL_UNICODE_STRING_BUFFER
+{
+    UNICODE_STRING String;
+    RTL_BUFFER ByteBuffer;
+    WCHAR MinimumStaticBufferForTerminalNul[sizeof(WCHAR)];
+} RTL_UNICODE_STRING_BUFFER, *PRTL_UNICODE_STRING_BUFFER;
+//----------------------------------------------------------------------
+typedef NTSTATUS (NTAPI *PFN_RtlNtPathNameToDosPathName)
+(
+    __in ULONG Flags,
+    __inout PRTL_UNICODE_STRING_BUFFER Path,
+    __out_opt PULONG Disposition,
+    __inout_opt PWSTR* FilePart
 );
 //----------------------------------------------------------------------
 #endif

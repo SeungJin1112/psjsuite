@@ -11,7 +11,7 @@ namespace psj
         , m_NtWriteVirtualMemory(nullptr)
         , m_RtlCreateUserThread(nullptr)
     {
-        HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+        HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
 
         if (ntdll == nullptr)
             return;
@@ -290,13 +290,10 @@ namespace psj
         _In_ PVOID viewBase,
         _In_ SIZE_T size)
     {
-        PPSJ_IMAGE_DOS_HEADER dosHeader = nullptr;
-        ULONG ntHeadersOffset = 0x00;
-
         mappedImage->view_base = viewBase;
         mappedImage->size = size;
 
-        dosHeader = (PPSJ_IMAGE_DOS_HEADER)viewBase;
+        PPSJ_IMAGE_DOS_HEADER dosHeader = (PPSJ_IMAGE_DOS_HEADER)viewBase;
 
         if (MappedImageProbe(mappedImage, dosHeader, sizeof(PSJ_IMAGE_DOS_HEADER)) == false)
             return false;
@@ -304,7 +301,7 @@ namespace psj
         if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
             return false;
 
-        ntHeadersOffset = (ULONG)dosHeader->e_lfanew;
+        ULONG ntHeadersOffset = (ULONG)dosHeader->e_lfanew;
 
         if (ntHeadersOffset == 0x00 || ntHeadersOffset >= 0x10000000 || ntHeadersOffset >= size)
             return false;
@@ -319,9 +316,9 @@ namespace psj
 
         if (MappedImageProbe(
             mappedImage, mappedImage->nt_headers,
-            FIELD_OFFSET(PSJ_IMAGE_NT_HEADERS, optional_header) +
-            mappedImage->nt_headers->file_header.size_of_optional_header +
-            mappedImage->nt_headers->file_header.number_of_sections * sizeof(PSJ_IMAGE_SECTION_HEADER)) == false)
+            FIELD_OFFSET(PSJ_IMAGE_NT_HEADERS, optional_header)
+            + mappedImage->nt_headers->file_header.size_of_optional_header
+            + mappedImage->nt_headers->file_header.number_of_sections * sizeof(PSJ_IMAGE_SECTION_HEADER)) == false)
             return false;
 
         if (mappedImage->nt_headers->signature != IMAGE_NT_SIGNATURE)
@@ -329,15 +326,15 @@ namespace psj
 
         mappedImage->magic = mappedImage->nt_headers->optional_header.magic;
 
-        if (mappedImage->magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
-            mappedImage->magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+        if (mappedImage->magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC
+            && mappedImage->magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
             return false;
 
         mappedImage->number_of_sections = mappedImage->nt_headers->file_header.number_of_sections;
 
         mappedImage->sections = (PPSJ_IMAGE_SECTION_HEADER)(
-            ((PCHAR)&mappedImage->nt_headers->optional_header) +
-            mappedImage->nt_headers->file_header.size_of_optional_header);
+            ((PCHAR)&mappedImage->nt_headers->optional_header)
+            + mappedImage->nt_headers->file_header.size_of_optional_header);
 
         return true;
     }
@@ -360,12 +357,239 @@ namespace psj
         if (userLength == 0x00 || ((ULONG_PTR)userAddress & (alignment - 0x01)) != 0x00)
             return false;
 
-        if (((ULONG_PTR)userAddress + userLength < (ULONG_PTR)userAddress) ||
-            ((ULONG_PTR)userAddress < (ULONG_PTR)bufferAddress) ||
-            ((ULONG_PTR)userAddress + userLength > (ULONG_PTR)bufferAddress + bufferLength))
+        if (((ULONG_PTR)userAddress + userLength < (ULONG_PTR)userAddress)
+            || ((ULONG_PTR)userAddress < (ULONG_PTR)bufferAddress)
+            || ((ULONG_PTR)userAddress + userLength > (ULONG_PTR)bufferAddress + bufferLength))
             return false;
 
         return true;
+    }
+
+    bool Injector::GetProcedureAddressRemote(
+        _In_ HANDLE processHandle,
+        _In_ PWSTR fileName,
+        _In_opt_ PSTR procedureName,
+        _In_opt_ ULONG procedureNumber,
+        _Out_ PVOID *procedureAddress,
+        _Out_opt_ PVOID *dllBase)
+    {
+        PSJ_MAPPED_IMAGE mappedImage = {};
+
+        if (LoadMappedImage(fileName, nullptr, TRUE, &mappedImage) == false)
+            return false;
+
+        std::wstring tmpFileName(fileName);
+        std::transform(tmpFileName.begin(), tmpFileName.end(), tmpFileName.begin(), [](wchar_t c){return static_cast<wchar_t>(towlower(static_cast<wint_t>(c)));});
+
+        PSJ_PROCEDURE_ADDRESS_REMOTE_CONTEXT context = {};
+        wcscpy_s(context.file_name, tmpFileName.c_str());
+
+        ModuleEnumerator moduleEnumerator(processHandle, ModuleEnumerator::GetProcedureAddressRemoteCallback, &context);
+
+        if (mappedImage.magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+        {
+#if !defined(_AMD64_) && !defined(_ARM64_)
+            PsjNtUnmapViewOfSection(NtCurrentProcess(), mappedImage.view_base);
+            return false;
+#endif
+        }
+
+        moduleEnumerator.EnumProcessModules();
+
+        if (context.dll_base == nullptr)
+        {
+            PsjNtUnmapViewOfSection(NtCurrentProcess(), mappedImage.view_base);
+            return false;
+        }
+
+        PSJ_MAPPED_IMAGE_EXPORTS exports;
+
+        if (GetMappedImageExports(&exports, &mappedImage) == false)
+        {
+            PsjNtUnmapViewOfSection(NtCurrentProcess(), mappedImage.view_base);
+            return false;
+        }
+
+        if (GetMappedImageExportFunctionRemote(&exports, procedureName, (USHORT)procedureNumber, context.dll_base, procedureAddress) == false)
+        {
+            PsjNtUnmapViewOfSection(NtCurrentProcess(), mappedImage.view_base);
+            return false;
+        }
+
+        if (dllBase != nullptr)
+            *dllBase = context.dll_base;
+
+        PsjNtUnmapViewOfSection(NtCurrentProcess(), mappedImage.view_base);
+        return true;
+    }
+
+    bool Injector::GetMappedImageExports(
+        _Out_ PPSJ_MAPPED_IMAGE_EXPORTS exports,
+        _In_ PPSJ_MAPPED_IMAGE mappedImage)
+    {
+        exports->mapped_image = mappedImage;
+
+        if (GetMappedImageDataEntry(mappedImage, IMAGE_DIRECTORY_ENTRY_EXPORT, &exports->data_directory) == false)
+            return false;
+
+        PPSJ_IMAGE_EXPORT_DIRECTORY exportDirectory = (PPSJ_IMAGE_EXPORT_DIRECTORY)MappedImageRvaToVa(
+            mappedImage,
+            exports->data_directory->virtual_address,
+            nullptr);
+
+        if (exportDirectory == nullptr)
+            return false;
+
+        if (MappedImageProbe(mappedImage, exportDirectory, sizeof(PSJ_IMAGE_EXPORT_DIRECTORY)) == false)
+            return false;
+
+        exports->export_directory = exportDirectory;
+        exports->number_of_entries = exportDirectory->number_of_functions;
+        exports->address_table = (uint32_t *)MappedImageRvaToVa(mappedImage, exportDirectory->address_of_functions, nullptr);
+        exports->name_pointer_table = (uint32_t *)MappedImageRvaToVa(mappedImage, exportDirectory->address_of_names, nullptr);
+        exports->ordinal_table = (uint16_t *)MappedImageRvaToVa(mappedImage, exportDirectory->address_of_name_ordinals, nullptr);
+
+        if (exports->address_table == nullptr || exports->name_pointer_table == nullptr || exports->ordinal_table == nullptr)
+            return false;
+
+        if (MappedImageProbe(mappedImage, exports->address_table, exportDirectory->number_of_functions * sizeof(uint32_t)) == false)
+            return false;
+
+        if (MappedImageProbe(mappedImage, exports->name_pointer_table, exportDirectory->number_of_names * sizeof(uint32_t)) == false)
+            return false;
+
+        if (MappedImageProbe(mappedImage, exports->ordinal_table, exportDirectory->number_of_functions * sizeof(uint16_t)) == false)
+            return false;
+
+        return true;
+    }
+
+    bool Injector::GetMappedImageDataEntry(
+        _In_ PPSJ_MAPPED_IMAGE mappedImage,
+        _In_ ULONG index,
+        _Out_ PPSJ_IMAGE_DATA_DIRECTORY *entry)
+    {
+        if (mappedImage->magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+        {
+            PPSJ_IMAGE_OPTIONAL_HEADER32 optionalHeader = (PPSJ_IMAGE_OPTIONAL_HEADER32)&mappedImage->nt_headers->optional_header;
+
+            if (index >= optionalHeader->number_of_rva_and_sizes)
+                return false;
+
+            *entry = &optionalHeader->data_directory[index];
+        }
+        else if (mappedImage->magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+        {
+            PPSJ_IMAGE_OPTIONAL_HEADER64 optionalHeader = (PPSJ_IMAGE_OPTIONAL_HEADER64)&mappedImage->nt_headers->optional_header;
+
+            if (index >= optionalHeader->number_of_rva_and_sizes)
+                return false;
+
+            *entry = &optionalHeader->data_directory[index];
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    PVOID Injector::MappedImageRvaToVa(
+        _In_ PPSJ_MAPPED_IMAGE mappedImage,
+        _In_ ULONG rva,
+        _Out_opt_ PPSJ_IMAGE_SECTION_HEADER *section)
+    {
+        PPSJ_IMAGE_SECTION_HEADER sectionHeader = MappedImageRvaToSection(mappedImage, rva);
+
+        if (section != nullptr)
+            *section = sectionHeader;
+
+        return (PVOID)((ULONG_PTR)mappedImage->view_base
+            + (rva - sectionHeader->virtual_address)
+            + sectionHeader->pointer_to_raw_data);
+    }
+
+    PPSJ_IMAGE_SECTION_HEADER Injector::MappedImageRvaToSection(
+        _In_ PPSJ_MAPPED_IMAGE mappedImage,
+        _In_ ULONG rva)
+    {
+        for (uint32_t i = 0x00; i < mappedImage->number_of_sections; i++)
+        {
+            if ((rva >= mappedImage->sections[i].virtual_address)
+                && (rva < mappedImage->sections[i].virtual_address + mappedImage->sections[i].size_of_raw_data))
+                return &mappedImage->sections[i];
+        }
+
+        return nullptr;
+    }
+
+    bool Injector::GetMappedImageExportFunctionRemote(
+        _In_ PPSJ_MAPPED_IMAGE_EXPORTS exports,
+        _In_opt_ PSTR name,
+        _In_opt_ USHORT ordinal,
+        _In_ PVOID remoteBase,
+        _Out_ PVOID *function)
+    {
+        if (name != "")
+        {
+            ULONG index = LookupMappedImageExportName(exports, name);
+
+            if (index == -0x01)
+                return false;
+
+            ordinal = exports->ordinal_table[index] + (USHORT)exports->export_directory->base;
+        }
+
+        ordinal -= (USHORT)exports->export_directory->base;
+
+        if (ordinal >= exports->export_directory->number_of_functions)
+            return false;
+
+        uint32_t rva = exports->address_table[ordinal];
+
+        if ((rva >= exports->data_directory->virtual_address)
+            && (rva < exports->data_directory->virtual_address + exports->data_directory->size))
+            return false;
+
+        *function = PTR_ADD_OFFSET(remoteBase, rva);
+
+        return true;
+    }
+
+    ULONG Injector::LookupMappedImageExportName(
+        _In_ PPSJ_MAPPED_IMAGE_EXPORTS exports,
+        _In_ PSTR name)
+    {
+        if (exports->export_directory->number_of_names == 0x00)
+            return -0x01;
+
+        int32_t low = 0x00;
+        int32_t high = exports->export_directory->number_of_names - 0x01;
+
+        do
+        {
+            int32_t i = (low + high) / 0x02;
+
+            LPSTR tmpName = (LPSTR)MappedImageRvaToVa(
+                exports->mapped_image,
+                exports->name_pointer_table[i],
+                nullptr);
+
+            if (tmpName == nullptr)
+                return -0x01;
+
+            INT comparison = strcmp(name, tmpName);
+
+            if (comparison == 0x00)
+                return i;
+            else if (comparison < 0x00)
+                high = i - 0x01;
+            else
+                low = i + 0x01;
+        } while (low <= high);
+
+        return -0x01;
     }
 
     bool Injector::InjectDllIntoProcess(HANDLE processHandle, const std::wstring& dllName)

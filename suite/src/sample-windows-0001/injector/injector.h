@@ -1,8 +1,11 @@
 #pragma once
 
-#include "../../../../platform/windows_def.h"
+#include "../platform/windows_def.h"
 
+#include <algorithm>
 #include <string>
+
+#include "../enumerator/module_enumerator.h"
 
 namespace psj
 {

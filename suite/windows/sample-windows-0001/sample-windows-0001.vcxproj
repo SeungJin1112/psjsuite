@@ -147,13 +147,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\sample-windows-0001\enumerator\enumerator.cpp" />
+    <ClCompile Include="..\..\src\sample-windows-0001\enumerator\module_enumerator.cpp" />
+    <ClCompile Include="..\..\src\sample-windows-0001\enumerator\process_enumerator.cpp" />
     <ClCompile Include="..\..\src\sample-windows-0001\injector\injector.cpp" />
     <ClCompile Include="..\..\src\sample-windows-0001\sample-windows-0001.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\sample-windows-0001\enumerator\enumerator.h" />
+    <ClInclude Include="..\..\src\sample-windows-0001\enumerator\module_enumerator.h" />
+    <ClInclude Include="..\..\src\sample-windows-0001\enumerator\process_enumerator.h" />
     <ClInclude Include="..\..\src\sample-windows-0001\injector\injector.h" />
+    <ClInclude Include="..\..\src\sample-windows-0001\platform\pe_image.h" />
+    <ClInclude Include="..\..\src\sample-windows-0001\platform\platform.h" />
+    <ClInclude Include="..\..\src\sample-windows-0001\platform\windows_def.h" />
     <ClInclude Include="..\..\src\sample-windows-0001\sample-windows-0001.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

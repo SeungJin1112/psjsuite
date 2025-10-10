@@ -19,27 +19,45 @@
     <Filter Include="소스 파일\injector">
       <UniqueIdentifier>{4e9bcef8-0962-4f00-ba86-c48f2a5468f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\platform">
+      <UniqueIdentifier>{6c0523c1-8355-4e78-8041-a2ab1940f757}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\sample-windows-0001\enumerator\enumerator.cpp">
-      <Filter>소스 파일\enumerator</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\sample-windows-0001\injector\injector.cpp">
       <Filter>소스 파일\injector</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\sample-windows-0001\sample-windows-0001.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\sample-windows-0001\enumerator\module_enumerator.cpp">
+      <Filter>소스 파일\enumerator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sample-windows-0001\enumerator\process_enumerator.cpp">
+      <Filter>소스 파일\enumerator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\sample-windows-0001\enumerator\enumerator.h">
-      <Filter>소스 파일\enumerator</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\sample-windows-0001\injector\injector.h">
       <Filter>소스 파일\injector</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\sample-windows-0001\sample-windows-0001.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sample-windows-0001\platform\pe_image.h">
+      <Filter>소스 파일\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sample-windows-0001\platform\platform.h">
+      <Filter>소스 파일\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sample-windows-0001\platform\windows_def.h">
+      <Filter>소스 파일\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sample-windows-0001\enumerator\module_enumerator.h">
+      <Filter>소스 파일\enumerator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sample-windows-0001\enumerator\process_enumerator.h">
+      <Filter>소스 파일\enumerator</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
