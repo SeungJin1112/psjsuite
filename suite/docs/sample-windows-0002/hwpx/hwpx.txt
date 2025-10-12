@@ -1,0 +1,5 @@
+hwpx-owpml-model: https://github.com/hancom-io/hwpx-owpml-model?tab=readme-ov-file
+
+개방형 워드프로세서 마크업 언어(OWPML) 문서 구조: https://www.kssn.net/search/stddetail.do?itemNo=K001010119985
+
+한/글 파일 포맷 HWPX: https://meetup.nhncloud.com/posts/311
