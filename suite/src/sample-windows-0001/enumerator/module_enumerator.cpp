@@ -6,7 +6,13 @@ namespace psj
         _In_ HANDLE processHandle,
         _In_ PPSJ_ENUM_PROCESS_MODULES_CALLBACK callback,
         _In_opt_ PVOID context)
-        : m_processHandle(processHandle), m_callback(callback), m_context(context)
+        : m_NtQueryInformationProcess(nullptr)
+        , m_NtQueryVirtualMemory(nullptr)
+        , m_NtReadVirtualMemory(nullptr)
+        , m_RtlNtPathNameToDosPathName(nullptr)
+        , m_processHandle(processHandle)
+        , m_callback(callback)
+        , m_context(context)
     {
         HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
 
