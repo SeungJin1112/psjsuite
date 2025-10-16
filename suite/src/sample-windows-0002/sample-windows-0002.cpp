@@ -42,6 +42,8 @@ int main(int argc, char *argv[])
         }
     }
 
+    std::set<std::string> extractedFiles;
+
     {
         unzFile zip = unzOpen(filePath.c_str());
 
@@ -72,7 +74,10 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            std::filesystem::create_directories(std::filesystem::path(filename).parent_path());
+            auto parent = std::filesystem::path(filename).parent_path();
+
+            if (parent.empty() == false && std::filesystem::exists(parent) == false)
+                std::filesystem::create_directories(parent);
 
             if (unzOpenCurrentFile(zip) != UNZ_OK)
                 continue;
@@ -93,12 +98,17 @@ int main(int argc, char *argv[])
                 fwrite(buffer.data(), bytesRead, 0x01, out);
             }
 
+            extractedFiles.insert(filename);
+
             fclose(out);
             unzCloseCurrentFile(zip);
         } while (unzGoToNextFile(zip) == UNZ_OK);
 
         unzClose(zip);
     }
+
+    ooxml::DocxConverter converter(extractedFiles);
+    converter.ConvertToPdf("output.pdf");
 
     return static_cast<int>(RETURN_CODE::SUCCESS);
 }

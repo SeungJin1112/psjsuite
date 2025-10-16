@@ -111,6 +111,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\lib\zlib;$(ProjectDir)..\..\lib\libpng;$(ProjectDir)..\..\lib\libharu\include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -151,6 +152,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\lib\zlib;$(ProjectDir)..\..\lib\libpng;$(ProjectDir)..\..\lib\libharu\include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -164,10 +166,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\lib\tinyxml2\tinyxml2.cpp" />
+    <ClCompile Include="..\..\src\sample-windows-0002\ooxml\docx_converter.cpp" />
     <ClCompile Include="..\..\src\sample-windows-0002\sample-windows-0002.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\lib\tinyxml2\tinyxml2.h" />
+    <ClInclude Include="..\..\src\sample-windows-0002\ooxml\docx_converter.h" />
     <ClInclude Include="..\..\src\sample-windows-0002\sample-windows-0002.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

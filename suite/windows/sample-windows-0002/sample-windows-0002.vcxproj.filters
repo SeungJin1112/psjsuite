@@ -19,6 +19,9 @@
     <Filter Include="lib\tinyxml2">
       <UniqueIdentifier>{15f07a8c-d705-4f8d-9e39-7196eda9dde4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ooxml">
+      <UniqueIdentifier>{f21562ec-f095-4869-b007-9d1276524ffe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\sample-windows-0002\sample-windows-0002.cpp">
@@ -27,6 +30,9 @@
     <ClCompile Include="..\..\lib\tinyxml2\tinyxml2.cpp">
       <Filter>lib\tinyxml2</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\sample-windows-0002\ooxml\docx_converter.cpp">
+      <Filter>ooxml</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\sample-windows-0002\sample-windows-0002.h">
@@ -34,6 +40,9 @@
     </ClInclude>
     <ClInclude Include="..\..\lib\tinyxml2\tinyxml2.h">
       <Filter>lib\tinyxml2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sample-windows-0002\ooxml\docx_converter.h">
+      <Filter>ooxml</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
